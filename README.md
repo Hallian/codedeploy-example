@@ -14,7 +14,7 @@ npm run deploy-webapp -- webapp-1
 
 # CodeDeploy
 
-![deployment](deployment.png)
+![deployment](images/deployment.png)
 
 ## Appspec
 
@@ -54,7 +54,7 @@ npm run deploy-webapp -- webapp-1
 
 # CloudFormation
 
-![stack](stack.png)
+![stack](images/stack.png)
 
 ## Create stack
 
@@ -80,3 +80,21 @@ npm run wait-stack-create
 npm run wait-stack-update
 npm run wait-stack-exists
 ```
+
+# EC2
+
+We'll run our Webapp on an Auto Scaling Group with EC2 instances. For this we're going to need an Amazon Machine Image
+(AMI) with our dependencies installed. Things like the CodeDeploy agent and NodeJS. We could simply install these during
+the application deployment but that would increase the deployment time. It would also be error prone due to the possibility
+of OS vendors package repositories being offline for example.
+
+## Build AMI with Packer
+
+Packer is perfect for creating AMIs with software preinstalled in a repeatable fashion.
+
+```
+packer build webapp.packer.json
+```
+
+---
+Author Nikolas Lahtinen
