@@ -1,7 +1,5 @@
 # codedeploy-example
 
-![stack](stack.png)
-
 # Getting started
 
 ```
@@ -15,6 +13,8 @@ npm run deploy-webapp -- webapp-1
 ```
 
 # CodeDeploy
+
+![deployment](deployment.png)
 
 ## Appspec
 
@@ -53,6 +53,8 @@ npm run deploy-webapp -- webapp-1
 ```
 
 # CloudFormation
+
+![stack](stack.png)
 
 ## Create stack
 
