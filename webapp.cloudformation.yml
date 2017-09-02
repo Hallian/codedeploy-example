@@ -1,0 +1,195 @@
+---
+Parameters:
+  KeyName:
+    Type: String
+    Default: nikolas
+  WebappSubnets:
+    Type: CommaDelimitedList
+    Default: subnet-063c705f, subnet-bd6155ca, subnet-fb2c209e
+  ALBSubnets:
+    Type: CommaDelimitedList
+    Default: subnet-063c705f, subnet-bd6155ca, subnet-fb2c209e
+  MinSize:
+    Type: Number
+    Default: 1
+  MaxSize:
+    Type: Number
+    Default: 2
+  VPC:
+    Type: String
+    Default: vpc-ff84de9a
+  AMIID:
+    Type: String
+    Default: ami-4df23734
+Resources:
+  WebappApplication:
+    Type: "AWS::CodeDeploy::Application"
+  WebappDeploymentGroup:
+    Type: "AWS::CodeDeploy::DeploymentGroup"
+    Properties:
+      ApplicationName: !Ref WebappApplication
+      ServiceRoleArn: !GetAtt CodeDeployRole.Arn
+      DeploymentConfigName: CodeDeployDefault.AllAtOnce
+      AutoScalingGroups:
+      - Ref: AutoScalingGroup
+  ALBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: allow access to ALB from internet
+      VpcId:
+        Ref: VPC
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: '80'
+        ToPort: '80'
+        CidrIp: 0.0.0.0/0
+  WebappSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: allow access to Webapp from ALB
+      VpcId:
+        Ref: VPC
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: '3000'
+        ToPort: '3000'
+        SourceSecurityGroupId:
+          Ref: ALBSecurityGroup
+      - IpProtocol: tcp
+        FromPort: '22'
+        ToPort: '22'
+        CidrIp: 0.0.0.0/0
+  WebappDeploymentBucket:
+    Type: "AWS::S3::Bucket"
+  CodeDeployRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "codedeploy.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        -
+          PolicyName: allow-autoscaling
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - ec2:*
+                  - autoscaling:*
+                Resource: "*"
+  WebappRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "ec2.amazonaws.com"
+                - "codedeploy.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        -
+          PolicyName: "allow-webapp-deployment-bucket-bucket"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: "Allow"
+                Action: "s3:getObject"
+                Resource: !Sub arn:aws:s3:::${WebappDeploymentBucket}/*
+  WebappInstanceProfile:
+    Type: "AWS::IAM::InstanceProfile"
+    Properties:
+      Roles:
+        - Ref: WebappRole
+  WebappLaunchConfig:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      # AssociatePublicIpAddress: true
+      ImageId:
+        Ref: AMIID
+      InstanceType: t2.medium
+      KeyName:
+        Ref: KeyName
+      SecurityGroups:
+        - Ref: WebappSecurityGroup
+      IamInstanceProfile:
+        Ref: WebappInstanceProfile
+      # UserData:
+      #   "Fn::Base64":
+      #     !Sub |
+      #       #!/bin/bash -xe
+      #       echo 'do we beed user data?'
+  AutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      HealthCheckType: ELB
+      HealthCheckGracePeriod: 300
+      MinSize:
+        Ref: MinSize
+      MaxSize:
+        Ref: MaxSize
+      LaunchConfigurationName:
+        Ref: WebappLaunchConfig
+      VPCZoneIdentifier:
+        Ref: WebappSubnets
+      TargetGroupARNs:
+        - Ref: ALBTargetGroup
+      Tags:
+        - Key: Name
+          Value: webapp-example
+          PropagateAtLaunch: true
+  ALBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        -
+          Type: forward
+          TargetGroupArn:
+            Ref: ALBTargetGroup
+      LoadBalancerArn:
+        Ref: ApplicationLoadBalancer
+      Port: 80
+      Protocol: HTTP
+  ApplicationLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Scheme: internet-facing
+      Subnets:
+        Ref: ALBSubnets
+      SecurityGroups:
+        - Ref: ALBSecurityGroup
+  ALBTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 30
+      UnhealthyThresholdCount: 2
+      HealthyThresholdCount: 2
+      HealthCheckPath: /healthcheck
+      Port: 3000
+      Protocol: HTTP
+      VpcId:
+        Ref: VPC
+Outputs:
+  WebappUrl:
+    Description: Webapp URL
+    Value: !GetAtt ApplicationLoadBalancer.DNSName
+  DeploymentGroup:
+    Description: Webapp Deployment Group
+    Value: !Ref WebappDeploymentGroup
+  DeploymentBucket:
+    Description: Deployment bucket
+    Value: !Ref WebappDeploymentBucket

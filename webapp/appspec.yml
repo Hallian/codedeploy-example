@@ -1,5 +1,8 @@
 version: 0.0
 os: linux
+files:
+  - source: src
+    destination: /opt/webapp
 hooks:
   ApplicationStop:
     - location: deployment_scripts/stop.sh

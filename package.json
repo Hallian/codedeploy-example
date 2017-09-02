@@ -4,7 +4,18 @@
   "description": "aws codedeploy example",
   "main": "src/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "create-stack": "aws cloudformation create-stack --stack-name webapp-example --template-body=file://webapp.cloudformation.yml --capabilities CAPABILITY_IAM",
+    "update-stack": "aws cloudformation update-stack --stack-name webapp-example --template-body=file://webapp.cloudformation.yml --capabilities CAPABILITY_IAM",
+    "delete-stack": "aws cloudformation delete-stack --stack-name webapp-example",
+    "remove-stack": "aws cloudformation delete-stack --stack-name webapp-example",
+    "describe-stack": "aws cloudformation describe-stacks --stack-name webapp-example",
+    "describe-stack-events": "aws cloudformation describe-stack-events --stack-name webapp-example",
+    "wait-stack-delete": "aws cloudformation wait stack-delete-complete --stack-name webapp-example",
+    "wait-stack-remove": "aws cloudformation wait stack-delete-complete --stack-name webapp-example",
+    "wait-stack-create": "aws cloudformation wait stack-create-complete --stack-name webapp-example",
+    "wait-stack-update": "aws cloudformation wait stack-update-complete --stack-name webapp-example",
+    "wait-stack-exists": "aws cloudformation wait stack-exists --stack-name webapp-example"
   },
   "repository": {
     "type": "git",

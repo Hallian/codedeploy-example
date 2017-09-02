@@ -15,5 +15,8 @@
 	}, {
 		"type": "shell",
 		"script": "provision_scripts/install-codedeploy-agent.sh"
+	}, {
+		"type": "shell",
+		"script": "provision_scripts/install-nodejs.sh"
 	}]
 }
