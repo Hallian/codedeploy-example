@@ -3,6 +3,8 @@ os: linux
 files:
   - source: src
     destination: /opt/webapp
+  - source: node_modules
+    destination: /opt/webapp/node_modules
 hooks:
   ApplicationStop:
     - location: deployment_scripts/stop.sh

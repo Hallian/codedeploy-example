@@ -15,7 +15,8 @@
     "wait-stack-remove": "aws cloudformation wait stack-delete-complete --stack-name webapp-example",
     "wait-stack-create": "aws cloudformation wait stack-create-complete --stack-name webapp-example",
     "wait-stack-update": "aws cloudformation wait stack-update-complete --stack-name webapp-example",
-    "wait-stack-exists": "aws cloudformation wait stack-exists --stack-name webapp-example"
+    "wait-stack-exists": "aws cloudformation wait stack-exists --stack-name webapp-example",
+    "deploy-webapp": "bash scripts/deploy-webapp.sh"
   },
   "repository": {
     "type": "git",
@@ -32,6 +33,5 @@
   },
   "homepage": "https://github.com/Hallian/codedeploy-example#readme",
   "dependencies": {
-    "express": "^4.15.4"
   }
 }

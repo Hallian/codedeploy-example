@@ -118,7 +118,7 @@ Resources:
   WebappLaunchConfig:
     Type: AWS::AutoScaling::LaunchConfiguration
     Properties:
-      # AssociatePublicIpAddress: true
+      AssociatePublicIpAddress: true
       ImageId:
         Ref: AMIID
       InstanceType: t2.medium
