@@ -1,4 +1,8 @@
-# codedeploy-example
+# AWS CodeDeploy Example
+
+This project will demonstrate the basics of deploying an application to an Auto Scaled EC2 instance with CodeDeploy. The infrastructure
+is setup is automated with CloudFormation. A NodeJS Express application will serve as a dummy application. Dependencies are preinstalled
+into the AMI with Packer.
 
 # Getting started
 
