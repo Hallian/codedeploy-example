@@ -1,0 +1,19 @@
+{
+	"builders": [
+		{
+			"type": "amazon-ebs",
+			"region": "eu-west-1",
+			"source_ami": "ami-3e713f4d",
+			"instance_type": "t2.micro",
+			"ssh_username": "ubuntu",
+			"ami_name": "ubuntu codedeploy {{timestamp}}"
+		}
+	],
+	"provisioners": [{
+		"type": "shell",
+		"script": "provision_scripts/install-awscli.sh"
+	}, {
+		"type": "shell",
+		"script": "provision_scripts/install-codedeploy-agent.sh"
+	}]
+}
