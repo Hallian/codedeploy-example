@@ -58,6 +58,8 @@ npm run deploy-webapp -- webapp-1
 
 ## Create stack
 
+We'll use the `aws` cli tool to create the stack.
+
 ```
 aws cloudformation create-stack \
 	--stack-name webapp-example \
@@ -65,7 +67,23 @@ aws cloudformation create-stack \
 	--capabilities CAPABILITY_IAM
 ```
 
-Useful npm scripts:
+However that's a bit cumbersome to type out every time so `package.json` contains a bunch of handful scripts, e.g.
+
+```
+npm run create-stack
+```
+
+## Remove stack
+
+To remove the stack you'll first need to clean up the S3 deployment bucket. CloudFormation will refuse to delete buckets
+that are not empty.
+
+```
+npm run cleanup-s3
+npm run remove-stack
+```
+
+## Useful npm scripts:
 
 ```
 npm run create-stack
