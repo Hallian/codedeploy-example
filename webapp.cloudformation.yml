@@ -193,3 +193,6 @@ Outputs:
   DeploymentBucket:
     Description: Deployment bucket
     Value: !Ref WebappDeploymentBucket
+  ApplicationName:
+    Description: CodeDeploy Application name
+    Value: !Ref WebappApplication
