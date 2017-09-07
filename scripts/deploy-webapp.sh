@@ -4,6 +4,11 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 REVISION=$1
 
+if [ -z "$REVISION"]; then
+	echo "No revision specified!"
+	exit 1
+fi
+
 STACK_OUTPUTS=`aws cloudformation describe-stacks --stack-name webapp-example --query "Stacks[0].Outputs[].[OutputValue]" --output text`
 DEPLOYMENT_BUCKET=`echo "$STACK_OUTPUTS" | grep webappdeploymentbucket`
 DEPLOYMENT_GROUP=`echo "$STACK_OUTPUTS" | grep WebappDeploymentGroup`
