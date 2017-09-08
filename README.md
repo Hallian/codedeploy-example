@@ -4,9 +4,19 @@ This project will demonstrate the basics of deploying an application to an Auto 
 is setup is automated with CloudFormation. A NodeJS Express application will serve as a dummy application. Dependencies are preinstalled
 into the AMI with Packer.
 
+# Prerequisites
+
+You should have the [aws cli](http://docs.aws.amazon.com/cli/latest/userguide/awscli-install-bundle.html) installed and [configured with your
+AWS credentials](http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html). [NodeJS and npm](https://nodejs.org/en/) are also
+required to run the example app.
+
+You should also change the default values for the CloudFormation template. You could do this during the stack creation command but that's
+tedious, so I find it easied to just modify the `Parameters` section in `webapp.cloudformation.yml`. See *CloudFormation* section for more info.
+
 # Getting started
 
-Well start off by creating a stack of AWS resources that we're going to use to serve our application. Use the AWS CLI to create a CloudFormation stack from `webapp.cloudformation.yml`.
+Well start off by creating a stack of AWS resources that we're going to use to serve our application. Use the AWS CLI to create a CloudFormation
+stack from `webapp.cloudformation.yml`.
 
 ```
 aws cloudformation create-stack \
@@ -211,6 +221,17 @@ create them for us with a single command. Updating and removing them is as simpl
 the benefit is having your infrastructure versioned just like your code.
 
 ![stack](images/stack.png)
+
+## Default parameters
+
+You should change the default parameters for the CloudFormation stack. You can do this during stack creation but that's tedious.
+The default parameters are an easy way of storing your AWS details. This template however will have mine which wont work for you.
+So edit the `Parameters` section of `webapp.cloudformation.yml` with your AWS details and all of the commands described here will
+work without modifition.
+
+You should at least change `KeyName`, `WebappSubnets`, `ALBSubnets`, `VPC` and `AMIID`. You can register an SSH key at AWS EC2 console.
+The default VPC and subnets found under the AWS VPC console will do just fine. The AMI id can be obtained by building the Amazon Machine
+image with Packer. See *EC2* section for more info on building the AMI.
 
 ## Create stack
 
