@@ -118,13 +118,97 @@ These scripts are located in the `webapp/deployment_scripts` folder.
 
 ## Deploy
 
+As described in the *Getting started* section we can use the `aws` cli tool to create a zip package of our applications
+source code and push it to S3.
+
+```
+aws deploy push --application-name $APPLICATION_NAME \
+	--s3-location s3://$DEPLOYMENT_BUCKET/$REVISION \
+	--source webapp
+```
+
+However, you don't need to use `aws` cli for this. You can use any method to create a zip or tar.gz archive. `tar` is especially useful
+when you source code is not all in one convenient folder that you can zip up. The `--transform` flag on `tar` can be used to rename
+files inside the archive. For example say you have your appspec.yml in a folder called `codedeploy` instead of project root where CodeDeploy
+will look for it, you could use the `--transform` to move it in the package, e.g.
+
+```
+tar -czf package.tar.gz --transform="s|webapp/codedeploy/appspec.yml|appspec.yml|" webapp
+```
+
+The command above will output a gzipped tar archive called `package.tar.gz` with the appspec moved to the root:
+
+```
+webapp/
+webapp/codedeploy/
+appspec.yml
+webapp/deployment_scripts/
+webapp/deployment_scripts/deploy.sh
+...
+```
+
+Note that this repository actually has the appspec.yml in the `webapp` folder so the above isn't necessary here.
+
+You can use `aws` cli to upload your package to S3.
+
+```
+aws s3 cp package.tar.gz s3://$DEPLOYMENT_BUCKET/$REVISION
+```
+
+To deploy your application you can either go to the AWS CodeDeploy console or use the `aws` cli. Using the command line
+tool is highly recommended since it can easily be scripted thus easing development.
+
+```
+aws deploy create-deployment --application-name $APPLICATION_NAME \
+	--s3-location bucket="$DEPLOYMENT_BUCKET",key="$REVISION",bundleType=zip \
+	--deployment-group-name $DEPLOYMENT_GROUP
+```
+
+Depending on your package type change the `bundleType` parameter to one of `tar`, `tgz` or `zip`.
+
+### Scripting
+
+As described in *Getting started* section, it's convenient to automated all of this with a script. The `scripts` folder
+contains a script called `deploy-webapp.sh` that will fetch the required details from your CloudFormation stack, create
+the package, upload it to S3 and create a deployment with CodeDeploy.
+
+If you're using npm or a similar system with configurable scripts you should add your scripts there as well. This will further
+ease development. With package.json for example you could configure the scripts section as follows.
+
+```
+  "scripts": {
+    "deploy-webapp": "bash scripts/deploy-webapp.sh"
+  },
+```
+
+Now you can run `npm run deploy-webapp -- revision-1` to deploy your application. The `--` denotes that all arguments after that
+will be passed to the script.
+
+You can easily use this to create a Continuous Deployment setup. For example, you could run a bash scripts something like this
+on a some CI.
+
 ```
 cd webapp
 npm install
-npm run deploy-webapp -- webapp-1
+npm run test
+
+if [ $BRANCH == "master" ]; then
+	npm run deploy-webapp -- webapp-$BUILD_NUMBER $PROD_DEPLOYMENT_GROUP
+elif [ $BRANCH == "develop" ]; then
+	npm run deploy-webapp -- webapp-$BUILD_NUMBER $TEST_DEPLOYMENT_GROUP
+fi
 ```
 
+You should run tests for all of your branches.
+
+We could extend `deploy-webapp.sh` script to accept a deployment group as a parameter and use an `if` statement to conditionally
+deploy to different environments based on branch.
+
 # CloudFormation
+
+Managing AWS resources is easy with CloudFormation. We describe the resources we want as an YAML file and CloudFormation will
+create them for us with a single command. Updating and removing them is as simple. This is called infrastructure as code and
+the benefit is having your infrastructure versioned just like your code.
 
 ![stack](images/stack.png)
 
@@ -155,7 +239,10 @@ npm run cleanup-s3
 npm run remove-stack
 ```
 
-## Useful npm scripts:
+## Useful npm scripts
+
+Typing out those `aws` cli commands can be a chore sometimes so the `package.json` contains a set of scripts for dealing
+with various lifycycle events. They should be pretty self explanatory so here's a listing of them.
 
 ```
 npm run create-stack
@@ -169,6 +256,13 @@ npm run wait-stack-remove
 npm run wait-stack-create
 npm run wait-stack-update
 npm run wait-stack-exists
+```
+
+The commands called `wait-stack-*` can be used to wait for a certain stack event to complete. For example, wait for your
+stack to be created before pushing deployment. This is very useful in scripts. e.g.
+
+```
+npm run create-stack && npm run wait-stack-create && npm run deploy-webapp -- webapp-1
 ```
 
 # EC2
