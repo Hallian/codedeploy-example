@@ -6,15 +6,68 @@ into the AMI with Packer.
 
 # Getting started
 
+Well start off by creating a stack of AWS resources that we're going to use to serve our application. Use the AWS CLI to create a CloudFormation stack from `webapp.cloudformation.yml`.
+
 ```
-npm run create-stack
+aws cloudformation create-stack \
+	--stack-name webapp-example \
+	--template-body=file://webapp.cloudformation.yml \
+	--capabilities CAPABILITY_IAM
 ```
+
+Next we'll deploy our sample `webapp`. It's a simple Express application written in NodeJS so you'll need to install it's dependencies with npm.
 
 ```
 cd webapp
 npm install
+```
+
+To deploy our application we'll use aws cli to create a zip file of our sources and push it to S3.
+
+```
+# in project root
+aws deploy push --application-name $APPLICATION_NAME \
+	--s3-location s3://$DEPLOYMENT_BUCKET/$REVISION \
+	--source webapp
+```
+
+Replace `$APPLICATION_NAME`, `$DEPLOYMENT_BUCKET` and `$REVISION` with your values. Revision can be anything but it should include an incrementing
+version number, e.g. `webapp-1, webapp-2, webapp-3...`.
+You can obtain the application name and deployment bucket from the example webapp stack's outputs with the following command.
+
+```
+aws cloudformation describe-stacks --stack-name webapp-example
+```
+
+Once you've pushed your new revision package to S3, the command will output a command that you can use to deploy the application to a deployment group.
+It will look something like this:
+
+```
+aws deploy create-deployment --application-name $APPLICATION_NAME \
+	--s3-location bucket="$DEPLOYMENT_BUCKET",key="$REVISION",bundleType=zip \
+	--deployment-group-name $DEPLOYMENT_GROUP
+```
+
+That command will create a new deployment in CodeDeploy. The CodeDeploy agent on your instances will notice this and download the new revision.
+
+## Scripting
+
+Since it's somewhat tedious to be writing all of that all the time, it pays to have a script do it for you. The `scripts` folder contains a script
+that will do all of the above in one step.
+
+```
+../scripts/deploy-webapp.sh webapp-1
+```
+
+Alternatively, you can use the convenient npm scripts registered in the scripts section of `package.json`:
+
+```
+npm run create-stack
+...
 npm run deploy-webapp -- webapp-1
 ```
+
+npm scripts like these can be configured in the scripts section of `package.json`.
 
 # CodeDeploy
 
