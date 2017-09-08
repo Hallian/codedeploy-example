@@ -49,6 +49,7 @@ aws deploy create-deployment --application-name $APPLICATION_NAME \
 ```
 
 That command will create a new deployment in CodeDeploy. The CodeDeploy agent on your instances will notice this and download the new revision.
+See *CodeDeploy* section for more info.
 
 ## Scripting
 
@@ -71,11 +72,20 @@ npm scripts like these can be configured in the scripts section of `package.json
 
 # CodeDeploy
 
+Below is a simplified chart of a deployment workflow. 
+
 ![deployment](images/deployment.png)
 
 ## Appspec
 
+`appspec.yml` is a file used to tell CodeDeploy how to install your application. You can find this in the root of `webapp` folder which will be packaged
+as a zip archive and uploaded to S3.
+
 ### Files
+
+The files section is used to copy files from your package to where ever you need to copy them in order for your application to function.
+In this example we'll copy the contents of `src` folder to `/opt/webapp`. Since NodeJS applications need their libraries to run, we'll copy
+`node_modules` to the same location as well.
 
 ```
 files:
@@ -89,6 +99,9 @@ files:
 
 ### Hooks
 
+Hooks are used to run scripts during various stages of the deployment. Here we'll use the `AfterInstall` hook to install our application as a `systemd`
+service and `ApplicationStart` and `ApplicationStop` hooks to start and stop our application with `systemctl`.
+
 ```
 hooks:
   ApplicationStop:
@@ -98,6 +111,8 @@ hooks:
   ApplicationStart:
     - location: deployment_scripts/start.sh
 ```
+
+These scripts are located in the `webapp/deployment_scripts` folder.
 
 [AWS Docs on hooks](http://docs.aws.amazon.com/codedeploy/latest/userguide/reference-appspec-file-structure-hooks.html)
 
